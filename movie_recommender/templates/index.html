@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎬 CineMatch – Movie Recommender</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --card: #1a1a26;
+      --border: #2a2a3d;
+      --accent: #e63946;
+      --gold: #f4a261;
+      --text: #e8e8f0;
+      --muted: #7a7a9a;
+      --green: #2ec4b6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a0a14 50%, #0a0a1a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem;
+      letter-spacing: 3px;
+      color: var(--accent);
+    }
+    header span {
+      font-size: 0.85rem;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── MAIN LAYOUT ── */
+    .main { display: flex; min-height: calc(100vh - 120px); }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 320px;
+      min-width: 320px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .panel { display: none; flex-direction: column; gap: 1rem; }
+    .panel.active { display: flex; }
+
+    .panel h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      color: var(--gold);
+    }
+    .panel p { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    select, input[type="text"], input[type="number"] {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    select:focus, input:focus { border-color: var(--accent); }
+
+    .btn {
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.85rem;
+      border-radius: 8px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
+    .btn.secondary {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+    }
+
+    .method-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      background: rgba(230,57,70,0.15);
+      color: var(--accent);
+      border: 1px solid rgba(230,57,70,0.3);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      margin-bottom: 0.8rem;
+    }
+
+    /* ── RESULTS AREA ── */
+    .results-area {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .results-header h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+    }
+    .result-count {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.2rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.2rem;
+    }
+
+    /* ── MOVIE CARD ── */
+    .movie-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .movie-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--gold));
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .movie-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 30px rgba(230,57,70,0.15);
+    }
+    .movie-card:hover::before { opacity: 1; }
+
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem; }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 1rem;
+      line-height: 1.3;
+      flex: 1;
+      padding-right: 0.5rem;
+    }
+
+    .card-rating {
+      background: rgba(244,162,97,0.15);
+      border: 1px solid rgba(244,162,97,0.3);
+      color: var(--gold);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .card-meta { display: flex; gap: 0.5rem; margin-bottom: 0.7rem; flex-wrap: wrap; }
+
+    .tag {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .tag.genre { color: var(--green); border-color: rgba(46,196,182,0.3); background: rgba(46,196,182,0.05); }
+    .tag.year { color: var(--gold); border-color: rgba(244,162,97,0.3); }
+
+    .card-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 0.8rem;
+    }
+
+    .card-score {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .score-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .score-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--gold));
+      border-radius: 2px;
+      transition: width 0.8s ease;
+    }
+    .score-val { font-size: 0.75rem; color: var(--muted); min-width: 35px; text-align: right; }
+
+    .card-method {
+      font-size: 0.68rem;
+      color: rgba(230,57,70,0.6);
+      margin-top: 0.5rem;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      color: var(--muted);
+      text-align: center;
+      gap: 1rem;
+    }
+    .empty-state .icon { font-size: 4rem; opacity: 0.3; }
+    .empty-state p { font-size: 0.95rem; }
+
+    /* ── LOADING ── */
+    .loader {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      gap: 0.6rem;
+      color: var(--muted);
+    }
+    .loader.active { display: flex; }
+    .dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ── HOW IT WORKS ── */
+    .info-box {
+      background: rgba(46,196,182,0.05);
+      border: 1px solid rgba(46,196,182,0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .info-box strong { color: var(--green); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .main { flex-direction: column; }
+      .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); }
+      .cards-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <h1>🎬 CineMatch</h1>
+  <span>AI Movie Recommender</span>
+  <span style="margin-left: auto; color: var(--green);">● Live</span>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('content')">🎯 Content-Based</button>
+  <button class="tab-btn" onclick="switchTab('collaborative')">👥 Collaborative</button>
+  <button class="tab-btn" onclick="switchTab('search')">🔍 Year & Genre</button>
+  <button class="tab-btn" onclick="switchTab('hybrid')">⚡ Hybrid</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- ── CONTENT-BASED PANEL ── -->
+    <div class="panel active" id="panel-content">
+      <h3>Content-Based Filtering</h3>
+      <div class="info-box">
+        <strong>How it works:</strong> Uses <strong>TF-IDF + Cosine Similarity</strong> on movie genres, descriptions, and year to find movies similar to your chosen title.
+      </div>
+      <div>
+        <label>Select a Movie You Like</label>
+        <select id="cb-title">
+          <option value="">— Choose a movie —</option>
+          {% for title in titles %}
+          <option value="{{ title }}">{{ title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn" onclick="getContentBased()">FIND SIMILAR MOVIES</button>
+    </div>
+
+    <!-- ── COLLABORATIVE PANEL ── -->
+    <div class="panel" id="panel-collaborative">
+      <h3>Collaborative Filtering</h3>
+      <div class="info-box">
+        <strong>How it works:</strong> Computes <strong>User-User Cosine Similarity</strong> on a rating matrix, then recommends movies that similar users enjoyed but you haven't seen.
+      </div>
+      <div>
+        <label>Select User ID (0–19)</label>
+        <input type="number" id="cf-user" min="0" max="19" value="0" placeholder="Enter user ID (0-19)"/>
+      </div>
+      <p style="font-size:0.78rem; color: var(--muted);">In a real app, this would be your account. Here, 20 simulated users demonstrate collaborative filtering.</p>
+      <button class="btn" onclick="getCollaborative()">GET MY RECOMMENDATIONS</button>
+    </div>
+
+    <!-- ── SEARCH PANEL ── -->
+    <div class="panel" id="panel-search">
+      <h3>Year & Genre Search</h3>
+      <div class="info-box">
+        <strong>How it works:</strong> Filters movies by your chosen <strong>genre</strong> and <strong>year range (±5 years)</strong>, returning the highest-rated matches.
+      </div>
+      <div>
+        <label>Genre</label>
+        <select id="search-genre">
+          <option value="all">All Genres</option>
+          {% for genre in genres %}
+          <option value="{{ genre }}">{{ genre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Year (±5 year range)</label>
+        <select id="search-year">
+          <option value="">Any Year</option>
+          {% for year in years %}
+          <option value="{{ year }}">{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn" onclick="getSearch()">SEARCH MOVIES</button>
+    </div>
+
+    <!-- ── HYBRID PANEL ── -->
+    <div class="panel" id="panel-hybrid">
+      <h3>Hybrid Recommendation</h3>
+      <div class="info-box">
+        <strong>How it works:</strong> Combines <strong>Content-Based + Collaborative Filtering + Genre/Year Filter</strong> for the most comprehensive recommendations.
+      </div>
+      <div>
+        <label>Movie Title (optional)</label>
+        <select id="hybrid-title">
+          <option value="">— Choose a movie —</option>
+          {% for title in titles %}
+          <option value="{{ title }}">{{ title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Genre (optional)</label>
+        <select id="hybrid-genre">
+          <option value="">Any Genre</option>
+          {% for genre in genres %}
+          <option value="{{ genre }}">{{ genre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Year (optional)</label>
+        <select id="hybrid-year">
+          <option value="">Any Year</option>
+          {% for year in years %}
+          <option value="{{ year }}">{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>User ID (0–19)</label>
+        <input type="number" id="hybrid-user" min="0" max="19" value="0"/>
+      </div>
+      <button class="btn" onclick="getHybrid()">GET HYBRID PICKS</button>
+    </div>
+
+  </aside>
+
+  <!-- RESULTS AREA -->
+  <main class="results-area">
+    <div class="results-header">
+      <h2 id="results-title">RECOMMENDATIONS</h2>
+      <span class="result-count" id="result-count">0 results</span>
+    </div>
+
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <span style="margin-left:0.5rem;">Finding movies...</span>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="empty-state">
+      <div class="icon">🎬</div>
+      <p>Select a method from the left panel<br>and click to get recommendations!</p>
+    </div>
+
+    <!-- Cards Grid -->
+    <div class="cards-grid" id="cards-grid"></div>
+  </main>
+
+</div>
+
+<script>
+  // ── TAB SWITCHING ──
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+  }
+
+  // ── RENDER CARDS ──
+  function renderCards(results, title) {
+    const grid = document.getElementById('cards-grid');
+    const empty = document.getElementById('empty-state');
+    const countEl = document.getElementById('result-count');
+    document.getElementById('results-title').textContent = title.toUpperCase();
+
+    grid.innerHTML = '';
+    countEl.textContent = results.length + ' results';
+
+    if (!results.length) {
+      empty.style.display = 'flex';
+      empty.innerHTML = '<div class="icon">😕</div><p>No movies found. Try different inputs!</p>';
+      return;
+    }
+
+    empty.style.display = 'none';
+
+    results.forEach((movie, i) => {
+      const genres = (movie.genres || '').split('|').slice(0, 3);
+      const score = Math.min(movie.score || 70, 100);
+      const card = document.createElement('div');
+      card.className = 'movie-card';
+      card.style.animationDelay = (i * 0.05) + 's';
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="card-title">${movie.title}</div>
+          <div class="card-rating">⭐ ${movie.rating}</div>
+        </div>
+        <div class="card-meta">
+          <span class="tag year">${movie.year}</span>
+          ${genres.map(g => `<span class="tag genre">${g}</span>`).join('')}
+        </div>
+        <div class="card-desc">${movie.description}</div>
+        <div class="card-score">
+          <div class="score-bar">
+            <div class="score-fill" style="width: ${score}%"></div>
+          </div>
+          <div class="score-val">${Math.round(score)}%</div>
+        </div>
+        <div class="card-method">${movie.method}</div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // ── LOADING STATE ──
+  function setLoading(on) {
+    document.getElementById('loader').className = on ? 'loader active' : 'loader';
+    document.getElementById('cards-grid').style.display = on ? 'none' : 'grid';
+    if (on) document.getElementById('empty-state').style.display = 'none';
+  }
+
+  // ── API CALLS ──
+  async function getContentBased() {
+    const title = document.getElementById('cb-title').value;
+    if (!title) return alert('Please select a movie!');
+    setLoading(true);
+    const res = await fetch('/recommend/content', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ title })
+    });
+    const data = await res.json();
+    setLoading(false);
+    renderCards(data.results, 'Similar to: ' + title);
+  }
+
+  async function getCollaborative() {
+    const user_id = document.getElementById('cf-user').value;
+    setLoading(true);
+    const res = await fetch('/recommend/collaborative', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ user_id })
+    });
+    const data = await res.json();
+    setLoading(false);
+    renderCards(data.results, 'Picks for User ' + user_id);
+  }
+
+  async function getSearch() {
+    const genre = document.getElementById('search-genre').value;
+    const year = document.getElementById('search-year').value;
+    setLoading(true);
+    const res = await fetch('/recommend/search', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ genre, year })
+    });
+    const data = await res.json();
+    setLoading(false);
+    renderCards(data.results, genre + (year ? ' · ' + year : ''));
+  }
+
+  async function getHybrid() {
+    const title = document.getElementById('hybrid-title').value;
+    const genre = document.getElementById('hybrid-genre').value;
+    const year = document.getElementById('hybrid-year').value;
+    const user_id = document.getElementById('hybrid-user').value;
+    setLoading(true);
+    const res = await fetch('/recommend/hybrid', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ title, genre, year, user_id })
+    });
+    const data = await res.json();
+    setLoading(false);
+    renderCards(data.results, 'Hybrid Picks');
+  }
+</script>
+
+</body>
+</html>
